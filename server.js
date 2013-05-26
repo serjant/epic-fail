@@ -1,26 +1,21 @@
-'use strict';
+var port = 8080;
+var express = require('express');
+var app = express();
+var server = require('http').createServer(app);
+var socketIO = require('socket.io');
 
-var nodeStatic = require( 'node-static' ),
-	socketIO = require( 'socket.io' ),
-	epicFail = require( './src/epic-fail' );
+var epicFail = require( './src/epic-fail' );
 
-var fileServer = new nodeStatic.Server( './static' );
+app.use(express.static('./static'));
 
-var server = require( 'http' ).createServer( function( request, response ) {
-	request.addListener( 'end', function() {
-		fileServer.serve( request, response );
-	});
-})
+server.listen(port);
 
-server.listen( 8080 );
-console.log( '[EPIC] Static server running at :8080.' );
-
-var io = socketIO.listen( server );
+var io = socketIO.listen(server) ;
 
 // Switch off debug messages.
-io.set( 'log level', 1 );
+io.set( 'log level', 3);
 
 io.sockets.on( 'connection', function( socket ) {
-	epicFail.add( socket );
+	epicFail.add( io, socket );
 });
-console.log( '[EPIC] Sockets server running at :8080.' );
+console.log('EPIC server is running at http://localhost:%d', port);
