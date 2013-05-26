@@ -4,7 +4,7 @@ var DEBUG = true;
 	'use strict';
 
 	var COMMIT_INTERVAL = 200,
-		SELECTION_INTERVAL = 500;
+		SELECTION_INTERVAL = 5000;
 
 	CKEDITOR.plugins.add( 'epicfail', {
 		init: function( editor ) {
