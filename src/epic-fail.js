@@ -51,7 +51,7 @@ var getDocumentClients = function( doc ) {
 		return [];
 }
 
-exports.add = function add( socket ) {
+exports.add = function add( io, socket ) {
 	var clientId = socket.id,
 		client = _clients[ clientId ] = {
 			docId: null,
@@ -146,7 +146,7 @@ exports.add = function add( socket ) {
 
 		client.name = data.clientName;
 
-		socket.broadcast.to( client.docId ).emit( 'name', {
+        io.sockets.in(client.docId).emit( 'name', {
 			clientId: clientId,
 			clientName: client.name,
 			clients: getDocumentClients( client.doc )
