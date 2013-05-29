@@ -51,7 +51,7 @@ var getDocumentClients = function( doc ) {
 		return [];
 }
 
-exports.add = function add( io, socket ) {
+exports.add = function add( io, socket, dataProvider ) {
 	var clientId = socket.id,
 		client = _clients[ clientId ] = {
 			docId: null,
@@ -118,7 +118,13 @@ exports.add = function add( io, socket ) {
 	socket.on( 'commit', function( data ) {
 		var success = client.doc.domit.apply( data.diff );
 
-		if ( success ) {
+		if ( success ) {		
+			dataProvider.save(data, function(error, data) {
+					if (error) console.log('[EPIC] ERROR Could not save data ' + data);
+					else console.log('[EPIC] Saved data ' + data);
+				}
+			);
+		
 			socket.broadcast.to( client.docId ).emit( 'push', {
 				diff: data.diff,
 				selection: data.selection,
