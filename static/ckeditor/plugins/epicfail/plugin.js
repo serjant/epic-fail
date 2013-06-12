@@ -7,7 +7,21 @@ var DEBUG = true;
 		SELECTION_INTERVAL = 5000;
 
 	CKEDITOR.plugins.add( 'epicfail', {
+		icons: 'epicfail',
 		init: function( editor ) {
+		
+			editor.addCommand( 'getVersions', {
+				exec: function( editor ) {
+					getVersions(that);
+				}
+			});
+			
+			editor.ui.addButton( 'getVersions', {
+				label: 'Recreate document from saved diffs',
+				command: 'getVersions',
+				toolbar: 'insert'
+			});
+		
 			var that = {
 					editor: editor,
 					editable: null,
@@ -31,7 +45,7 @@ var DEBUG = true;
 					that.head = getCurrent( that );
 					socket.emit( 'init', {
 						docId: that.docId,
-						head: that.head
+						head: that.head,
 					});
 				});
 
@@ -84,7 +98,7 @@ var DEBUG = true;
 				});
 
 				socket.on( 'push', function( data ) {
-					mergeWith( that, data );
+					mergeWith( that, data, true );
 					editor.plugins.caretlocator.updateClientCaret( data, editor );
 
 					DEBUG && console.log( 'New data has been pushed by the server.' );
@@ -94,6 +108,11 @@ var DEBUG = true;
 					resetHard( that, data );
 
 					DEBUG && console.log( 'Had to reset --hard to master.' );
+				});
+
+				socket.on( 'versions_fetched', function( data ) {
+					DEBUG && console.log("Versions fetched - data: %j", data);
+					applyDiffs(that, data);
 				});
 
 			});
@@ -118,6 +137,15 @@ var DEBUG = true;
 			        '</li>' ).appendTo( list );
 		}
 	}
+	
+	function getVersions(that) {
+		var stamp = +new Date();
+	
+		that.socket.emit( 'get_versions', {
+			docId: that.docId,
+			stamp: stamp,
+		});		
+	}
 
 	function initClientPanel( that, data ) {
 		var nameInput = CKEDITOR.document.getById( 'clientName' ),
@@ -141,7 +169,7 @@ var DEBUG = true;
 	function commitChanges( that ) {
 		var editable = that.editable,
 			html = editable.getHtml();
-
+			
 		if ( html == that.headHtml || that.pending )
 			return;
 
@@ -159,8 +187,9 @@ var DEBUG = true;
 			diff: diff,
 			stamp: stamp,
 			// Send new selection, because usually it's changed with content.
-			selection: that.editor.getSelection().createBookmarks2( true )
+			selection: that.editor.getSelection().createBookmarks2( true ),
 		});
+		
 	}
 
 	function accepted( that, data ) {
@@ -197,13 +226,13 @@ var DEBUG = true;
 		resetPending( that );
 	}
 
-	function mergeWith( that, data ) {
+	function mergeWith( that, data, commit ) {
 		var current = getCurrent( that ),
 			merged = CKEDITOR.domit.applyDiff( current, data.diff );
 
 		if ( merged ) {
 			// Commit before pulling.
-			commitChanges( that );
+			if (commit) commitChanges( that );
 
 			if ( CKEDITOR.domit.applyToDom( that.editable, data.diff ) ) {
 				that.head = merged;
@@ -229,6 +258,54 @@ var DEBUG = true;
 
 	function getCurrent( that ) {
 		return CKEDITOR.pseudom.parseChildren( that.editable );
+	}
+
+	function applyDiffs( that, data ) {		
+		// Clear editor: all diffs from first diff will be applied 
+		that.editable.setData('');
+		
+		// Apply each diff individually and "offline", i.e. without informing the other clients
+		for (var i = 0; i < data.length; i++) {
+			mergeWith(that, data[i], false);
+		}	
+	}
+
+	/*
+	 * TOOD: delete this if applyDiffs works.
+	 */
+	function applyDiffs2( that, data ) {
+		
+		/*
+		 * Merge diffs "offline", i.e. without informing other clients yet: logic taken from mergeWith().
+		 *
+		 * TODO: current method merges via the editor (getCurrent() requires the editor to have been updated) => 
+		 * merge another way invisible to the user (not using a gui control so most likely faster)
+		 */
+		for (var i = 0; i < data.length; i++) {
+			var current = getCurrent( that ),
+				merged = CKEDITOR.domit.applyDiff( current, data[i].diff );
+			
+			if (merged) {
+				if (CKEDITOR.domit.applyToDom( that.editable, data[i].diff ) ) {
+					that.head = merged;
+					that.headHtml = that.editable.getHtml();
+					// Update local pending changes after merging.
+					if ( that.pending ) {
+						that.pending = merged;
+						that.pendingHtml = that.headHtml;
+					}
+				}
+			} else {
+				console.log("ERROR: could not merge diff # " + i);
+			}
+		}
+
+		pending = getCurrent( that );
+		var diff = CKEDITOR.domit.diff( that.head, pending );
+		
+		// Inform other clients that the new version has been loaded, make one single "OT commit"
+		// TODO: send some user-friendly message to the other users about the reload
+		mergeWith(that, diff);		
 	}
 
 })();

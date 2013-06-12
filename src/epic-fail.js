@@ -1,5 +1,7 @@
 'use strict';
 
+var DEBUG = true;
+
 var Domit = require( '../static/domit' );
 
 var _clients = {},
@@ -61,6 +63,8 @@ exports.add = function add( io, socket, dataProvider ) {
 		};
 
 	socket.on( 'init', function( data ) {
+		DEBUG && console.log("init - data: %j", data);
+
 		var docId = data.docId;
 		client.docId = docId;
 		var doc = _docs[ docId ];
@@ -90,7 +94,7 @@ exports.add = function add( io, socket, dataProvider ) {
 		// Join doc room.
 		socket.join( docId );
 
-		console.log( '[EPIC] Client (' + clientId + ') conntected to edit doc:' + docId );
+		console.log( '[EPIC] Client (' + clientId + ') connected to edit doc:' + docId );
 		console.log( '[EPIC] Number of clients editing doc:' + docId + ': ' + doc.clients.length );
 	});
 
@@ -116,6 +120,8 @@ exports.add = function add( io, socket, dataProvider ) {
 	});
 
 	socket.on( 'commit', function( data ) {
+		DEBUG && console.log("commit - data: %j", data);
+		
 		var success = client.doc.domit.apply( data.diff );
 
 		if ( success ) {		
@@ -164,4 +170,17 @@ exports.add = function add( io, socket, dataProvider ) {
 	socket.on( 'reset', function() {
 		socket.emit( 'reset', { head: client.doc.domit.head } );
 	});
+
+	socket.on( 'get_versions', function( data ) {	
+		dataProvider.findAll(data.docId, data.stamp, function(error, data) {
+				if (error) console.log('[EPIC] ERROR Could not find data ' + data);
+				else {
+					DEBUG && console.log("[EPIC] Found data %j" + data);
+					socket.emit( 'versions_fetched', data );
+				}
+			}
+		);
+	
+	});
+	
 };

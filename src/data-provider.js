@@ -17,11 +17,11 @@ DataProvider.prototype.getDocs= function(callback) {
 };
 
 //find all docs
-DataProvider.prototype.findAll = function(callback) {
+DataProvider.prototype.findAll = function(docId, stamp, callback) {
     this.getDocs(function(error, docs) {
       if( error ) callback(error)
       else {
-        docs.find().toArray(function(error, results) {
+        docs.find({"docId": docId, "stamp":{$lt: stamp}}).toArray(function(error, results) {
           if( error ) callback(error)
           else callback(null, results)
         });
