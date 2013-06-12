@@ -270,42 +270,4 @@ var DEBUG = true;
 		}	
 	}
 
-	/*
-	 * TOOD: delete this if applyDiffs works.
-	 */
-	function applyDiffs2( that, data ) {
-		
-		/*
-		 * Merge diffs "offline", i.e. without informing other clients yet: logic taken from mergeWith().
-		 *
-		 * TODO: current method merges via the editor (getCurrent() requires the editor to have been updated) => 
-		 * merge another way invisible to the user (not using a gui control so most likely faster)
-		 */
-		for (var i = 0; i < data.length; i++) {
-			var current = getCurrent( that ),
-				merged = CKEDITOR.domit.applyDiff( current, data[i].diff );
-			
-			if (merged) {
-				if (CKEDITOR.domit.applyToDom( that.editable, data[i].diff ) ) {
-					that.head = merged;
-					that.headHtml = that.editable.getHtml();
-					// Update local pending changes after merging.
-					if ( that.pending ) {
-						that.pending = merged;
-						that.pendingHtml = that.headHtml;
-					}
-				}
-			} else {
-				console.log("ERROR: could not merge diff # " + i);
-			}
-		}
-
-		pending = getCurrent( that );
-		var diff = CKEDITOR.domit.diff( that.head, pending );
-		
-		// Inform other clients that the new version has been loaded, make one single "OT commit"
-		// TODO: send some user-friendly message to the other users about the reload
-		mergeWith(that, diff);		
-	}
-
 })();
