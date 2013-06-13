@@ -229,6 +229,8 @@ var DEBUG = true;
 	function mergeWith( that, data, commit ) {
 		var current = getCurrent( that ),
 			merged = CKEDITOR.domit.applyDiff( current, data.diff );
+		
+		console.log('mergeWith - merged %j ', merged);
 
 		if ( merged ) {
 			// Commit before pulling.
@@ -264,9 +266,11 @@ var DEBUG = true;
 		// Clear editor: all diffs from first diff will be applied 
 		that.editable.setData('');
 		
-		// Apply each diff individually and "offline", i.e. without informing the other clients
+		// Apply each diff individually and "offline", i.e. do not inform the other clients (i.e. do not commit) until the last diff is applied
+		var commit = false;
 		for (var i = 0; i < data.length; i++) {
-			mergeWith(that, data[i], false);
+			if (i == data.length-1) commit = true;			
+			mergeWith(that, data[i], commit);
 		}	
 	}
 

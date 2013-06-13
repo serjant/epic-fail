@@ -173,9 +173,9 @@ exports.add = function add( io, socket, dataProvider ) {
 
 	socket.on( 'get_versions', function( data ) {	
 		dataProvider.findAll(data.docId, data.stamp, function(error, data) {
-				if (error) console.log('[EPIC] ERROR Could not find data ' + data);
+				if (error) console.log('[EPIC] ERROR Could not find data %j', data);
 				else {
-					DEBUG && console.log("[EPIC] Found data %j" + data);
+					DEBUG && console.log('[EPIC] Found data %j', data);
 					socket.emit( 'versions_fetched', data );
 				}
 			}
