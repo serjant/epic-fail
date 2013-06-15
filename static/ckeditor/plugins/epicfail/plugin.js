@@ -139,7 +139,9 @@ var DEBUG = true;
 	}
 	
 	function getVersions(that) {
-		var stamp = +new Date();
+		var stamp = new Date();		
+		stamp.setSeconds(stamp.getSeconds() - 10);
+		stamp = +stamp;
 	
 		that.socket.emit( 'get_versions', {
 			docId: that.docId,
