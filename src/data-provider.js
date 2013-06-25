@@ -1,3 +1,5 @@
+var DEBUG = true;
+
 var Db = require('mongodb').Db;
 var Connection = require('mongodb').Connection;
 var Server = require('mongodb').Server;
@@ -31,31 +33,31 @@ DataProvider.prototype.findAll = function(docId, stamp, callback) {
 
 //save new doc
 DataProvider.prototype.save = function(docs, callback) {
-	console.log( 'DataProvider: saving docs ' + JSON.stringify(docs, null, '\t'));
+	//DEBUG && console.log( 'DataProvider: saving docs ' + JSON.stringify(docs, null, '\t'));
 	
     this.getDocs(function(error, local_docs) {
       if( error ) callback(error)
       else {
-		console.log( 'DataProvider: ready to insert doc');
+    	//DEBUG && console.log( 'DataProvider: ready to insert doc');
 
 		if( typeof(docs)=="undefined") console.log('DataProvider: docs was undefined');
 
         if( typeof(docs.length)=="undefined") {
-		  console.log( 'DataProvider: docs length was undefined - convert to array');
+          //DEBUG && console.log( 'DataProvider: docs length was undefined - convert to array');
           docs = [docs];
 		}
 		
-		console.log('DataProvider: docs after conversion: ' + JSON.stringify(docs, null, '\t'));
+        //DEBUG && console.log('DataProvider: docs after conversion: ' + JSON.stringify(docs, null, '\t'));
 
         for( var i =0;i< docs.length;i++ ) {
-		  console.log( 'DataProvider: creating new doc ' + i);
+          //DEBUG && console.log( 'DataProvider: creating new doc ' + i);
           doc = docs[i];
           doc.created_at = new Date();
         }
 
-		console.log('DataProvider: docs before insert: ' + JSON.stringify(docs, null, '\t'));		
+        //DEBUG && console.log('DataProvider: docs before insert: ' + JSON.stringify(docs, null, '\t'));
         local_docs.insert(docs, function() {
-		  console.log('DataProvider: docs after insert: ' + JSON.stringify(docs, null, '\t'));
+          //DEBUG && console.log('DataProvider: docs after insert: ' + JSON.stringify(docs, null, '\t'));
           callback(null, docs);
         });
       }

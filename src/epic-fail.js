@@ -63,7 +63,7 @@ exports.add = function add( io, socket, dataProvider ) {
 		};
 
 	socket.on( 'init', function( data ) {
-		DEBUG && console.log("init - data: %j", data);
+		DEBUG && console.log('[EPIC] init - data: ' + JSON.stringify(data, null, '\t'));
 
 		var docId = data.docId;
 		client.docId = docId;
@@ -120,14 +120,14 @@ exports.add = function add( io, socket, dataProvider ) {
 	});
 
 	socket.on( 'commit', function( data ) {
-		DEBUG && console.log("commit - data: %j", data);
+		DEBUG && console.log('[EPIC] commit - data: ' + JSON.stringify(data, null, '\t'));
 		
 		var success = client.doc.domit.apply( data.diff );
 
 		if ( success ) {		
 			dataProvider.save(data, function(error, data) {
-					if (error) console.log('[EPIC] ERROR Could not save data ' + data);
-					else console.log('[EPIC] Saved data ' + data);
+					if (error) DEBUG && console.log('[EPIC] ERROR Could not save data: ' + JSON.stringify(data, null, '\t')); 
+					else DEBUG && console.log('[EPIC] Saved data: ' + JSON.stringify(data, null, '\t'));
 				}
 			);
 		
@@ -173,10 +173,14 @@ exports.add = function add( io, socket, dataProvider ) {
 
 	socket.on( 'get_versions', function( data ) {	
 		dataProvider.findAll(data.docId, data.stamp, function(error, data) {
-				if (error) console.log('[EPIC] ERROR Could not find data %j', data);
+				if (error) DEBUG && console.log('[EPIC] ERROR Could not find data: ' + JSON.stringify(data, null, '\t')); 
 				else {
-					DEBUG && console.log('[EPIC] Found data %j', data);
-					socket.emit( 'versions_fetched', data );
+					DEBUG && console.log('[EPIC] Found data: ' + JSON.stringify(data, null, '\t'));
+					
+					socket.emit( 'versions_fetched', { 
+						diffs: data,
+						clientId: clientId
+					} );
 				}
 			}
 		);

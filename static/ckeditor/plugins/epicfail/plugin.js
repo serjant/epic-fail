@@ -3,7 +3,7 @@ var DEBUG = true;
 (function() {
 	'use strict';
 
-	var COMMIT_INTERVAL = 200,
+	var COMMIT_INTERVAL = 4000,
 		SELECTION_INTERVAL = 5000;
 
 	CKEDITOR.plugins.add( 'epicfail', {
@@ -111,7 +111,7 @@ var DEBUG = true;
 				});
 
 				socket.on( 'versions_fetched', function( data ) {
-					DEBUG && console.log("Versions fetched - data: %j", data);
+					DEBUG && console.log('Versions fetched - data: ' + JSON.stringify(data, null, '\t'));
 					applyDiffs(that, data);
 				});
 
@@ -139,8 +139,11 @@ var DEBUG = true;
 	}
 	
 	function getVersions(that) {
-		var stamp = new Date();		
-		stamp.setSeconds(stamp.getSeconds() - 10);
+		var stamp = new Date();
+
+		// TODO: get value from user
+		var numberOfSecondsToSubtract = 5;
+		stamp.setSeconds(stamp.getSeconds() - numberOfSecondsToSubtract);
 		stamp = +stamp;
 	
 		that.socket.emit( 'get_versions', {
@@ -228,30 +231,35 @@ var DEBUG = true;
 		resetPending( that );
 	}
 
-	function mergeWith( that, data, commit ) {
+	function mergeWith( that, data, inform ) {
 		var current = getCurrent( that ),
 			merged = CKEDITOR.domit.applyDiff( current, data.diff );
 		
-		console.log('mergeWith - merged %j ', merged);
+		//DEBUG && console.log('mergeWith - merged: ' + JSON.stringify(merged, null, '\t'));
 
 		if ( merged ) {
+			
 			// Commit before pulling.
-			if (commit) commitChanges( that );
+			if (inform) commitChanges( that );
 
 			if ( CKEDITOR.domit.applyToDom( that.editable, data.diff ) ) {
-				that.head = merged;
-				that.headHtml = that.editable.getHtml();
-				// Update local pending changes after merging.
-				if ( that.pending ) {
-					that.pending = merged;
-					that.pendingHtml = that.headHtml;
+				
+				if (inform) {
+					that.head = merged;
+					that.headHtml = that.editable.getHtml();
+					// Update local pending changes after merging.
+					if ( that.pending ) {
+						that.pending = merged;
+						that.pendingHtml = that.headHtml;
+					}
 				}
+				
 				return;
 			}
 		}
 
 		// Force reset to master.
-		that.socket.emit( 'reset' );
+		if (inform) that.socket.emit( 'reset' );
 	}
 
 	function resetPending( that ) {
@@ -265,15 +273,20 @@ var DEBUG = true;
 	}
 
 	function applyDiffs( that, data ) {		
-		// Clear editor: all diffs from first diff will be applied 
+		// Clear editor: all diffs from first diff will be applied (we could use some ACID here)
 		that.editable.setData('');
-		
-		// Apply each diff individually and "offline", i.e. do not inform the other clients (i.e. do not commit) until the last diff is applied
-		var commit = false;
-		for (var i = 0; i < data.length; i++) {
-			if (i == data.length-1) commit = true;			
-			mergeWith(that, data[i], commit);
-		}	
+
+		// Apply each diff individually and "offline", i.e. do not
+		// inform the other clients (i.e. do not commit) until the last
+		// diff is applied (which is also when any pending changes will
+		// be discarded)
+		var inform = false;
+		for (var i = 0; i < data.diffs.length; i++) {
+			if (i == data.diffs.length-1) {
+				inform = true;
+			}			
+			mergeWith(that, data.diffs[i], inform);
+		}
 	}
 
 })();
