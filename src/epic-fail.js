@@ -1,6 +1,6 @@
 'use strict';
 
-var DEBUG = true;
+var DEBUG = false;
 
 var Domit = require('../static/domit');
 
@@ -67,35 +67,38 @@ exports.add = function add(io, socket, dataProvider) {
 
         var docId = data.docId;
         client.docId = docId;
-        var doc = _docs[docId];
 
-        var toEmit = {
-            clientColor: client.color,
-            clientName: client.name
-        };
-
-        if (!doc) {
-            _docs[docId] = doc = {
-                id: docId,
-                clients: [],
-                domit: new Domit(data.head)
+        dataProvider.getDocument(docId, function (error, document) {
+            var doc = _docs[docId];
+            var toEmit = {
+                clientColor: client.color,
+                clientName: client.name
             };
-        }
-        else
+
+            if (!doc) {
+                console.log(document.data)
+                _docs[docId] = doc = {
+                    id: docId,
+                    clients: [],
+                    //domit: new Domit(data.head)
+                    domit: new Domit(document.length > 0 && document[0].data ? document[0].data : [])
+                };
+            }
             toEmit.head = doc.domit.head;
 
-        // Order is crucial.
-        doc.clients.push(client);
-        client.doc = doc;
-        toEmit.clients = getDocumentClients(doc);
+            // Order is crucial.
+            doc.clients.push(client);
+            client.doc = doc;
+            toEmit.clients = getDocumentClients(doc);
 
-        socket.emit('init', toEmit);
+            socket.emit('init', toEmit);
 
-        // Join doc room.
-        socket.join(docId);
+            // Join doc room.
+            socket.join(docId);
 
-        console.log('[EPIC] Client (' + clientId + ') connected to edit doc:' + docId);
-        console.log('[EPIC] Number of clients editing doc:' + docId + ': ' + doc.clients.length);
+            console.log('[EPIC] Client (' + clientId + ') connected to edit doc:' + docId);
+            console.log('[EPIC] Number of clients editing doc:' + docId + ': ' + doc.clients.length);
+        });
     });
 
     socket.on('disconnect', function () {
@@ -126,13 +129,13 @@ exports.add = function add(io, socket, dataProvider) {
         DEBUG && console.log('[EPIC] commit - data: ' + JSON.stringify(data, null, '\t'));
 
         var success = client.doc.domit.apply(data.diff);
-
+        console.log(JSON.stringify(client.doc.domit.head))
         if (success) {
             dataProvider.save(data, function (error, data) {
-                    if (error) DEBUG && console.log('[EPIC] ERROR Could not save data: ' + JSON.stringify(data, null, '\t'));
-                    else DEBUG && console.log('[EPIC] Saved data: ' + JSON.stringify(data, null, '\t'));
-                }
-            );
+                if (error) DEBUG && console.log('[EPIC] ERROR Could not save data: ' + JSON.stringify(data, null, '\t'));
+                else DEBUG && console.log('[EPIC] Saved data: ' + JSON.stringify(data, null, '\t'));
+            });
+            dataProvider.updateDocument(client.docId, client.doc.domit.head, null);
 
             socket.broadcast.to(client.docId).emit('push', {
                 diff: data.diff,
@@ -187,7 +190,5 @@ exports.add = function add(io, socket, dataProvider) {
                 }
             }
         );
-
     });
-
 };

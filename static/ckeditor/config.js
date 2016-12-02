@@ -14,7 +14,7 @@ CKEDITOR.editorConfig = function (config) {
         {name: 'styles'},
         {name: 'colors'},
         '/',
-        {name: 'insert', groups: ['Table']},
+        {name: 'insert', groups: ['Table', 'getVersions']},
         {name: 'tools'},
         {name: 'others'},
         {name: 'about'},
