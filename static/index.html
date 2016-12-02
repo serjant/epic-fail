@@ -1,42 +1,35 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>EPIC - Enormously Powerful Interactive CKEditor</title>
-	<meta charset="utf-8">
-	<link rel="stylesheet" href="styles.css">
-	<script>
-		if ( !window.location.search.slice( 0 ) )
-			window.location += '?' + ( Math.random() + '' ).slice( 2, 6 );
-	</script>
-	<script src="/socket.io/socket.io.js"></script>
-	<script src="ckeditor/ckeditor.js"></script>
-	<script src="domit.js"></script>
+    <title>EPIC - Enormously Powerful Interactive CKEditor</title>
+    <meta charset="utf-8">
+    <script type="text/javascript">
+        if (!window.location.search.slice(0))
+            window.location += '?' + ( Math.random() + '' ).slice(2, 6);
+    </script>
+    <link rel="stylesheet" href="styles.css"/>
+    <script type="application/javascript" src="socket-io/socket.io-1.0.6.js"></script>
+    <script type="application/javascript" src="ckeditor/ckeditor.js"></script>
+    <script type="application/javascript" src="domit.js"></script>
+
 </head>
 <body>
-	<div id="container">
-		<div id="container_left">
-			<div id="editable" contenteditable="true" class="box">
-			</div>
-		</div>
-		<div id="container_right">
-			<div class="clientPanel box">
-				<label for="clientName" class="panelLabel">What's your name?</label>
-				<input id="clientName" type="text">
-			</div>
-			<div class="lobbyPanel box">
-				<h3 class="panelLabel">Who's editing this document?</h3>
-				<ul id="lobbyClients">
-				</ul>
-			</div>
-			<div class="box">
-				<h3 class="panelLabel">Authors</h3>
-				<p>
-					<a href="http://twitter.com/reinmarpl">Piotrek Koszuliński</a>
-					<br>
-					<a href="http://twitter.com/anowodzinski">Aleksander Nowodziński</a>
-				</p>
-			</div>
-		</div>
-	</div>
+<div id="container">
+    <div id="container_left">
+        <div id="editable" contenteditable="true" class="box">
+        </div>
+    </div>
+    <div id="container_right">
+        <div class="clientPanel box">
+            <label for="clientName" class="panelLabel">What's your name?</label>
+            <input id="clientName" type="text">
+        </div>
+        <div class="lobbyPanel box">
+            <h3 class="panelLabel">Who's editing this document?</h3>
+            <ul id="lobbyClients">
+            </ul>
+        </div>
+    </div>
+</div>
 </body>
 </html>

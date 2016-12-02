@@ -3,8 +3,8 @@ var DEBUG = true;
 (function() {
 	'use strict';
 
-	var COMMIT_INTERVAL = 4000,
-		SELECTION_INTERVAL = 5000;
+	var COMMIT_INTERVAL = 400,
+		SELECTION_INTERVAL = 500;
 
 	CKEDITOR.plugins.add( 'epicfail', {
 		icons: 'epicfail',
@@ -45,7 +45,7 @@ var DEBUG = true;
 					that.head = getCurrent( that );
 					socket.emit( 'init', {
 						docId: that.docId,
-						head: that.head,
+						head: that.head
 					});
 				});
 
